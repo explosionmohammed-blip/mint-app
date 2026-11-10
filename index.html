@@ -2,175 +2,612 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>MINT App</title>
-    <!-- SDK Telegram Web App -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MINT Tap App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: var(--tg-theme-bg-color, #0f172a);
-            --text-color: var(--tg-theme-text-color, #ffffff);
-            --hint-color: var(--tg-theme-hint-color, #94a3b8);
-            --button-color: var(--tg-theme-button-color, #10b981);
-            --button-text-color: var(--tg-theme-button-text-color, #ffffff);
+            --bg-base: #06080c;
+            --bg-card: #0d131f;
+            --accent: #00ff88;
+            --accent-glow: rgba(0, 255, 136, 0.4);
+            --text-main: #ffffff;
+            --text-sub: #8b949e;
+            --border-color: rgba(255, 255, 255, 0.08);
         }
 
-        body {
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
+        }
+
+        /* Container adapté aux écrans téléphones */
+        .app-viewport {
+            width: 100vw;
+            height: 100dvh;
+            max-width: 480px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-base);
+        }
+
+        .view-container {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: calc(12px + env(safe-area-inset-top)) 16px 10px 16px;
+            overflow-y: auto;
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+
+        .view-container.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Header Mobile */
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-card);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00ff88, #00b4d8);
+            display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            text-align: center;
-            user-select: none;
-            overflow: hidden;
-        }
-
-        .header {
-            margin-bottom: 20px;
-        }
-
-        .title {
-            font-size: 32px;
             font-weight: 800;
+            font-size: 13px;
+            color: #000;
+        }
+
+        .user-text .name { font-size: 13px; font-weight: 700; }
+        .user-text .rank { font-size: 10px; color: var(--accent); font-weight: 600; }
+
+        .top-stats-badge {
+            background: var(--bg-card);
+            padding: 6px 12px;
+            border-radius: 18px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid var(--border-color);
+            color: var(--accent);
+        }
+
+        /* Section Solde */
+        .balance-box {
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        .balance-title {
+            font-size: 11px;
             letter-spacing: 2px;
-            margin: 0;
-            color: #10b981;
+            color: var(--text-sub);
+            font-weight: 800;
         }
 
-        .subtitle {
-            font-size: 14px;
-            color: var(--hint-color);
-            margin-top: 5px;
+        .balance-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 4px 0;
         }
 
-        .balance-container {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 20px 40px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 40px;
-            backdrop-filter: blur(10px);
-        }
-
-        .balance-label {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--hint-color);
+        .balance-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-glow);
         }
 
         .balance-amount {
-            font-size: 48px;
-            font-weight: 800;
-            margin-top: 5px;
+            font-size: 38px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            background: linear-gradient(180deg, #ffffff 30%, #a5f3fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .mint-btn {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: var(--button-text-color);
-            border: none;
-            width: 180px;
-            height: 180px;
-            border-radius: 50%;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
-            outline: none;
+        .euro-pill {
+            display: inline-block;
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid rgba(0, 255, 136, 0.25);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            background: var(--bg-card);
+            padding: 8px;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-card { text-align: center; }
+        .stat-label { font-size: 9px; color: var(--text-sub); font-weight: 700; }
+        .stat-value { font-size: 12px; font-weight: 800; margin-top: 2px; }
+
+        /* Zone de tap */
+        .clicker-wrapper {
+            position: relative;
+            width: 240px;
+            height: 240px;
             display: flex;
             align-items: center;
             justify-content: center;
+            margin: 10px auto;
+        }
+
+        .neon-aura {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,255,136,0.2) 0%, rgba(0,0,0,0) 70%);
+            animation: pulseAura 3s ease-in-out infinite;
+        }
+
+        @keyframes pulseAura {
+            0%, 100% { transform: scale(0.95); opacity: 0.6; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .ring-border {
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            border: 2px dashed rgba(0, 255, 136, 0.3);
+            animation: spinRing 25s linear infinite;
+        }
+
+        @keyframes spinRing {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .rotating-coin {
             position: relative;
+            width: 175px;
+            height: 175px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+            box-shadow: 0 0 35px var(--accent-glow);
+            transition: transform 0.08s ease;
+            animation: infiniteSpin 10s linear infinite;
         }
 
-        .mint-btn:active {
-            transform: scale(0.92);
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
+        .rotating-coin:active {
+            transform: scale(0.90);
         }
 
-        .floating-text {
+        @keyframes infiniteSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .floating-number {
             position: absolute;
             font-size: 24px;
-            font-weight: bold;
-            color: #10b981;
+            font-weight: 900;
+            color: var(--accent);
             pointer-events: none;
-            animation: floatUp 0.8s ease-out forwards;
+            animation: floatUpAnim 0.75s ease-out forwards;
+            text-shadow: 0 0 10px var(--accent-glow);
+            z-index: 100;
         }
 
-        @keyframes floatUp {
-            0% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-60px) scale(1.2);
-            }
+        @keyframes floatUpAnim {
+            0% { opacity: 1; transform: translate(0, 0) scale(0.8); }
+            100% { opacity: 0; transform: translate(var(--rand-x), -70px) scale(1.3); }
         }
+
+        /* Energie Mobile */
+        .energy-box {
+            width: 100%;
+            background: var(--bg-card);
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .energy-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .energy-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .energy-bar-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #00b4d8, #00ff88);
+            border-radius: 3px;
+            transition: width 0.2s ease;
+        }
+
+        /* Cartes d'onglets */
+        .page-title {
+            font-size: 20px;
+            font-weight: 900;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .card-list {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .custom-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .custom-card h4 { margin: 0 0 3px 0; font-size: 14px; font-weight: 700; }
+        .custom-card p { margin: 0; font-size: 11px; color: var(--text-sub); }
+
+        .action-btn {
+            background: var(--accent);
+            color: #06080c;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        /* Navbar Mobile */
+        .nav-bar {
+            width: 100%;
+            background: rgba(13, 19, 31, 0.98);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 calc(8px + env(safe-area-inset-bottom)) 0;
+            z-index: 1000;
+        }
+
+        .nav-tab {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: var(--text-sub);
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .nav-tab.active { color: var(--accent); }
+        .nav-icon { font-size: 18px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1 class="title">MINT</h1>
-        <div class="subtitle" id="user-greeting">Bienvenue !</div>
+<div class="app-viewport">
+    <!-- ONGLET MINING -->
+    <div id="view-mining" class="view-container active">
+        <div class="header">
+            <div class="user-badge">
+                <div class="avatar" id="avatar-initial">M</div>
+                <div class="user-text">
+                    <div class="name" id="user-display-name">Vermine</div>
+                    <div class="rank">NIV. 1 • Bronze</div>
+                </div>
+            </div>
+            <div class="top-stats-badge">⚡ 20k = 20€</div>
+        </div>
+
+        <div class="balance-box">
+            <div class="balance-title">SOLDE MINÉ</div>
+            <div class="balance-row">
+                <img src="mint-logo.png" class="balance-logo" alt="Logo">
+                <div class="balance-amount" id="balance">0</div>
+            </div>
+            <div class="euro-pill" id="euro-value">≈ 0,00 €</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">PAR TAP</div>
+                <div class="stat-value" style="color: var(--accent);">+1</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">PAR HEURE</div>
+                <div class="stat-value">+0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">AUTO-TAP</div>
+                <div class="stat-value">0/s</div>
+            </div>
+        </div>
+
+        <div class="clicker-wrapper" id="clicker-zone">
+            <div class="neon-aura"></div>
+            <div class="ring-border"></div>
+            <img src="mint-logo.png" class="rotating-coin" id="mint-coin" alt="MINT Logo">
+        </div>
+
+        <div class="energy-box">
+            <div class="energy-info">
+                <span>⚡ ÉNERGIE</span>
+                <span id="energy-text">1000 / 1000</span>
+            </div>
+            <div class="energy-bar-bg">
+                <div class="energy-bar-fill" id="energy-fill"></div>
+            </div>
+        </div>
     </div>
 
-    <div class="balance-container">
-        <div class="balance-label">Ton Solde</div>
-        <div class="balance-amount" id="balance">0 🟢</div>
+    <!-- ONGLET AVANTAGES -->
+    <div id="view-advantages" class="view-container">
+        <div class="page-title">🎁 Avantages & Boosts</div>
+        <div class="card-list">
+            <div class="custom-card">
+                <div class="card-info">
+                    <h4>🚀 Turbo Tap (+1 / tap)</h4>
+                    <p>Double tes gains par clic.</p>
+                </div>
+                <button class="action-btn" onclick="alert('Bientôt disponible !')">5 000 🟢</button>
+            </div>
+            <div class="custom-card">
+                <div class="card-info">
+                    <h4>🔋 Max Energie (+500)</h4>
+                    <p>Capacité maximale augmentée.</p>
+                </div>
+                <button class="action-btn" onclick="alert('Bientôt disponible !')">2 500 🟢</button>
+            </div>
+        </div>
+        <div></div>
     </div>
 
-    <button class="mint-btn" id="click-btn">
-        MINTER 📈
-    </button>
+    <!-- ONGLET AMIS (20 000 COINS = 20 EURO PAR INVITÉ) -->
+    <div id="view-friends" class="view-container">
+        <div class="page-title">👥 Inviter des Amis</div>
+        <div class="card-list" style="text-align: center; justify-content: center; padding: 15px 5px;">
+            <div style="font-size: 44px; margin-bottom: 6px;">🎁</div>
+            <h3 style="margin: 0 0 6px 0; color: var(--accent); font-size: 20px;">+20 000 Coins (20,00 €)</h3>
+            <p style="color: var(--text-sub); font-size: 13px; margin-bottom: 20px;">Gagne 20 000 MINT Coins pour chaque ami qui rejoint l'application via ton lien !</p>
+            <button class="action-btn" style="padding: 14px 20px; font-size: 14px; width: 100%;" onclick="alert('Lien d invitation copié !')">🔗 Copier mon lien (+20 000 🟢)</button>
+        </div>
+        <div></div>
+    </div>
 
-    <script>
-        // Initialisation de Telegram Web App
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // Agrandi la fenêtre dans Telegram
+    <!-- ONGLET CLASSEMENT -->
+    <div id="view-leaderboard" class="view-container">
+        <div class="page-title">🏆 Classement</div>
+        <div class="card-list">
+            <div class="custom-card">
+                <div class="card-info">
+                    <h4>🥇 1. Zino</h4>
+                    <p>1,450,200 MINT 🟢</p>
+                </div>
+                <span style="font-weight: 800; color: gold;">#1</span>
+            </div>
+            <div class="custom-card">
+                <div class="card-info">
+                    <h4>🥈 2. Dek</h4>
+                    <p>980,100 MINT 🟢</p>
+                </div>
+                <span style="font-weight: 800; color: silver;">#2</span>
+            </div>
+            <div class="custom-card" style="border-color: var(--accent);">
+                <div class="card-info">
+                    <h4>👉 Toi (Vermine)</h4>
+                    <p id="lb-my-score">0 MINT 🟢</p>
+                </div>
+                <span style="font-weight: 800; color: var(--accent);">#42</span>
+            </div>
+        </div>
+        <div></div>
+    </div>
 
-        // Affiche le prénom de l'utilisateur s'il est disponible via Telegram
+    <!-- ONGLET PROFIL -->
+    <div id="view-profile" class="view-container">
+        <div class="page-title">👤 Mon Profil</div>
+        <div class="card-list">
+            <div class="custom-card">
+                <div>
+                    <p>PSEUDO</p>
+                    <h3 id="profile-name" style="margin: 4px 0 0 0;">Vermine</h3>
+                </div>
+            </div>
+            <div class="custom-card">
+                <div>
+                    <p>VALEUR EN EUROS</p>
+                    <h3 id="profile-euro" style="margin: 4px 0 0 0; color: var(--accent);">0,00 €</h3>
+                </div>
+            </div>
+        </div>
+        <div></div>
+    </div>
+
+    <!-- NAVBAR BOTTOM -->
+    <nav class="nav-bar">
+        <button class="nav-tab active" onclick="switchTab('mining', this)">
+            <span class="nav-icon">⚡</span>
+            <span>Mining</span>
+        </button>
+        <button class="nav-tab" onclick="switchTab('advantages', this)">
+            <span class="nav-icon">🎁</span>
+            <span>Avantages</span>
+        </button>
+        <button class="nav-tab" onclick="switchTab('friends', this)">
+            <span class="nav-icon">👥</span>
+            <span>Amis</span>
+        </button>
+        <button class="nav-tab" onclick="switchTab('leaderboard', this)">
+            <span class="nav-icon">🏆</span>
+            <span>Classement</span>
+        </button>
+        <button class="nav-tab" onclick="switchTab('profile', this)">
+            <span class="nav-icon">👤</span>
+            <span>Profil</span>
+        </button>
+    </nav>
+</div>
+
+<script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+        tg.expand();
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            document.getElementById('user-greeting').innerText = `Salut ${tg.initDataUnsafe.user.first_name} 👋`;
+            const user = tg.initDataUnsafe.user;
+            const name = user.first_name || "Vermine";
+            document.getElementById('user-display-name').innerText = name;
+            document.getElementById('profile-name').innerText = name;
+            document.getElementById('avatar-initial').innerText = name.charAt(0).toUpperCase();
+        }
+    }
+
+    let coins = 0;
+    let maxEnergy = 1000;
+    let energy = 1000;
+
+    const balanceEl = document.getElementById('balance');
+    const euroEl = document.getElementById('euro-value');
+    const profileEuroEl = document.getElementById('profile-euro');
+    const lbScoreEl = document.getElementById('lb-my-score');
+    const clickerZone = document.getElementById('clicker-zone');
+    const energyFill = document.getElementById('energy-fill');
+    const energyText = document.getElementById('energy-text');
+
+    // Régénération d'énergie
+    setInterval(() => {
+        if (energy < maxEnergy) {
+            energy = Math.min(maxEnergy, energy + 10);
+            updateEnergyUI();
+        }
+    }, 1000);
+
+    function updateEnergyUI() {
+        energyText.innerText = `${energy} / ${maxEnergy}`;
+        energyFill.style.width = `${(energy / maxEnergy) * 100}%`;
+    }
+
+    // Tap action
+    clickerZone.addEventListener('pointerdown', (e) => {
+        if (energy <= 0) {
+            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+            return;
         }
 
-        let score = 0;
-        const balanceEl = document.getElementById('balance');
-        const btn = document.getElementById('click-btn');
+        coins += 1;
+        energy -= 1;
 
-        btn.addEventListener('click', (e) => {
-            score += 1;
-            balanceEl.innerText = `${score} 🟢`;
+        balanceEl.innerText = coins.toLocaleString();
+        lbScoreEl.innerText = `${coins.toLocaleString()} MINT 🟢`;
 
-            // Vibration haptique Telegram si disponible sur mobile
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
-            }
+        // 20 000 coins = 20,00 €
+        const euros = (coins * 0.001).toFixed(2);
+        const formattedEuro = `≈ ${euros.replace('.', ',')} €`;
+        euroEl.innerText = formattedEuro;
+        profileEuroEl.innerText = formattedEuro;
 
-            // Animation du "+1" au clic
-            const floating = document.createElement('div');
-            floating.className = 'floating-text';
-            floating.innerText = '+1';
-            
-            // Calcul de la position par rapport au bouton
-            const rect = btn.getBoundingClientRect();
-            floating.style.left = `${e.clientX - rect.left}px`;
-            floating.style.top = `${e.clientY - rect.top}px`;
-            
-            btn.appendChild(floating);
+        updateEnergyUI();
 
-            setTimeout(() => {
-                floating.remove();
-            }, 800);
-        });
-    </script>
+        if (tg?.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        // Bulle +1 au tap
+        const rect = clickerZone.getBoundingClientRect();
+        const floating = document.createElement('div');
+        floating.className = 'floating-number';
+        floating.innerText = '+1';
+
+        const x = e.clientX - rect.left - 15;
+        const y = e.clientY - rect.top - 15;
+        const randomX = (Math.random() - 0.5) * 50 + 'px';
+
+        floating.style.left = `${x}px`;
+        floating.style.top = `${y}px`;
+        floating.style.setProperty('--rand-x', randomX);
+
+        clickerZone.appendChild(floating);
+
+        setTimeout(() => floating.remove(), 750);
+    });
+
+    function switchTab(tabId, element) {
+        document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+        document.getElementById(`view-${tabId}`).classList.add('active');
+        element.classList.add('active');
+
+        if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+    }
+</script>
 </body>
 </html>
