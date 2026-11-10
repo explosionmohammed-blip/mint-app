@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MINT App</title>
+    <!-- SDK Telegram Web App -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #0f172a);
+            --text-color: var(--tg-theme-text-color, #ffffff);
+            --hint-color: var(--tg-theme-hint-color, #94a3b8);
+            --button-color: var(--tg-theme-button-color, #10b981);
+            --button-text-color: var(--tg-theme-button-text-color, #ffffff);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin: 0;
+            color: #10b981;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--hint-color);
+            margin-top: 5px;
+        }
+
+        .balance-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        .balance-label {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--hint-color);
+        }
+
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 800;
+            margin-top: 5px;
+        }
+
+        .mint-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: var(--button-text-color);
+            border: none;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            outline: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .mint-btn:active {
+            transform: scale(0.92);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
+        }
+
+        .floating-text {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            color: #10b981;
+            pointer-events: none;
+            animation: floatUp 0.8s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-60px) scale(1.2);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1 class="title">MINT</h1>
+        <div class="subtitle" id="user-greeting">Bienvenue !</div>
+    </div>
+
+    <div class="balance-container">
+        <div class="balance-label">Ton Solde</div>
+        <div class="balance-amount" id="balance">0 🟢</div>
+    </div>
+
+    <button class="mint-btn" id="click-btn">
+        MINTER 📈
+    </button>
+
+    <script>
+        // Initialisation de Telegram Web App
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Agrandi la fenêtre dans Telegram
+
+        // Affiche le prénom de l'utilisateur s'il est disponible via Telegram
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('user-greeting').innerText = `Salut ${tg.initDataUnsafe.user.first_name} 👋`;
+        }
+
+        let score = 0;
+        const balanceEl = document.getElementById('balance');
+        const btn = document.getElementById('click-btn');
+
+        btn.addEventListener('click', (e) => {
+            score += 1;
+            balanceEl.innerText = `${score} 🟢`;
+
+            // Vibration haptique Telegram si disponible sur mobile
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+
+            // Animation du "+1" au clic
+            const floating = document.createElement('div');
+            floating.className = 'floating-text';
+            floating.innerText = '+1';
+            
+            // Calcul de la position par rapport au bouton
+            const rect = btn.getBoundingClientRect();
+            floating.style.left = `${e.clientX - rect.left}px`;
+            floating.style.top = `${e.clientY - rect.top}px`;
+            
+            btn.appendChild(floating);
+
+            setTimeout(() => {
+                floating.remove();
+            }, 800);
+        });
+    </script>
+</body>
+</html>
